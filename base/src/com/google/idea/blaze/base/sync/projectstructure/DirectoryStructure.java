@@ -30,13 +30,18 @@ import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Directory structure representation used by {@link ContentEntryEditor}.
@@ -45,6 +50,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * structure commit step, as this step locks the UI.
  */
 public class DirectoryStructure {
+
+  private static final Logger logger = Logger.getInstance(DirectoryStructure.class);
 
   final ImmutableMap<WorkspacePath, DirectoryStructure> directories;
 
@@ -82,6 +89,8 @@ public class DirectoryStructure {
             .build();
     Collection<WorkspacePath> rootDirectories = importRoots.rootDirectories();
     Set<WorkspacePath> excludeDirectories = importRoots.excludeDirectories();
+    AtomicInteger totalDirs = new AtomicInteger(0);
+    ConcurrentHashMap<String, Integer> subtreeSizes = new ConcurrentHashMap<>();
     List<ListenableFuture<PathStructurePair>> futures =
         Lists.newArrayListWithExpectedSize(rootDirectories.size());
     for (WorkspacePath rootDirectory : rootDirectories) {
@@ -92,7 +101,9 @@ public class DirectoryStructure {
               fileOperationProvider,
               FetchExecutor.EXECUTOR,
               rootDirectory,
-              cancelled));
+              cancelled,
+              totalDirs,
+              subtreeSizes));
     }
     ImmutableMap.Builder<WorkspacePath, DirectoryStructure> result = ImmutableMap.builder();
     for (PathStructurePair pair : Futures.allAsList(futures).get()) {
@@ -100,6 +111,15 @@ public class DirectoryStructure {
         result.put(pair.path, pair.directoryStructure);
       }
     }
+    logger.info(
+        String.format(
+            "[DirectoryStructure] Total directories traversed: %d. Top subtrees by size:\n%s",
+            totalDirs.get(),
+            subtreeSizes.entrySet().stream()
+                .sorted(Comparator.comparingInt(Map.Entry<String, Integer>::getValue).reversed())
+                .limit(10)
+                .map(e -> String.format("  %6d  %s", e.getValue(), e.getKey()))
+                .collect(java.util.stream.Collectors.joining("\n"))));
     return new DirectoryStructure(result.build());
   }
 
@@ -109,7 +129,9 @@ public class DirectoryStructure {
       FileOperationProvider fileOperationProvider,
       ListeningExecutorService executorService,
       WorkspacePath workspacePath,
-      AtomicBoolean cancelled) {
+      AtomicBoolean cancelled,
+      AtomicInteger totalDirs,
+      ConcurrentHashMap<String, Integer> subtreeSizes) {
     if (cancelled.get() || excludeDirectories.contains(workspacePath)) {
       return Futures.immediateFuture(null);
     }
@@ -117,6 +139,7 @@ public class DirectoryStructure {
     if (!fileOperationProvider.isDirectory(file)) {
       return Futures.immediateFuture(null);
     }
+    totalDirs.incrementAndGet();
     ListenableFuture<File[]> childrenFuture =
         executorService.submit(() -> fileOperationProvider.listFiles(file));
     return Futures.transformAsync(
@@ -142,18 +165,23 @@ public class DirectoryStructure {
                     fileOperationProvider,
                     executorService,
                     childWorkspacePath,
-                    cancelled));
+                    cancelled,
+                    totalDirs,
+                    subtreeSizes));
           }
           return Futures.transform(
               Futures.allAsList(futures),
               (Function<List<PathStructurePair>, PathStructurePair>)
                   pairs -> {
                     Builder<WorkspacePath, DirectoryStructure> result = ImmutableMap.builder();
+                    int subtreeSize = 1;
                     for (PathStructurePair pair : pairs) {
                       if (pair != null) {
                         result.put(pair.path, pair.directoryStructure);
+                        subtreeSize += subtreeSizes.getOrDefault(pair.path.relativePath(), 0);
                       }
                     }
+                    subtreeSizes.put(workspacePath.relativePath(), subtreeSize);
                     return new PathStructurePair(
                         workspacePath, new DirectoryStructure(result.build()));
                   },
