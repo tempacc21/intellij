@@ -70,12 +70,17 @@ public class ContentEntryEditor {
           modifiableRootModel.addContentEntry(UrlUtil.pathToUrl(rootFile.getPath()));
       contentEntry.clearExcludeFolders();
 
+      boolean useExclusionPatterns = projectViewSet.getScalarValue(UseExclusionPatternsSection.KEY).orElse(true);
       for (WorkspacePath exclude : excludesByRootDirectory.get(rootDirectory)) {
-        File excludeFolder = workspaceRoot.fileForPath(exclude);
-        contentEntry.addExcludeFolder(UrlUtil.fileToIdeaUrl(excludeFolder));
+        if (useExclusionPatterns && !exclude.asPath().isAbsolute() && exclude.asPath().getNameCount() == 1) {
+          contentEntry.addExcludePattern(exclude.relativePath());
+        } else {
+          File excludeFolder = workspaceRoot.fileForPath(exclude);
+          contentEntry.addExcludeFolder(UrlUtil.fileToIdeaUrl(excludeFolder));
+        }
       }
 
-      if (projectViewSet.getScalarValue(UseExclusionPatternsSection.KEY).orElse(true)) {
+      if (useExclusionPatterns) {
         var exclusionPatternsDirectories = importRoots.systemExcludes();
 
         for (WorkspacePath workspacePath : exclusionPatternsDirectories) {
