@@ -55,6 +55,8 @@ public class DirectoryStructure {
 
   final ImmutableMap<WorkspacePath, DirectoryStructure> directories;
 
+  private static final DirectoryStructure EMPTY = new DirectoryStructure(ImmutableMap.of());
+
   private DirectoryStructure(ImmutableMap<WorkspacePath, DirectoryStructure> directories) {
     this.directories = directories;
   }
@@ -155,16 +157,20 @@ public class DirectoryStructure {
         String canonicalPath = file.getCanonicalPath();
         // Skip symlinks pointing outside the workspace (e.g. bazel-bin, bazel-out, bazel-<repo>).
         if (!canonicalPath.startsWith(workspaceCanonicalPath)) {
-          logger.info("[DirectoryStructure] Skipping external symlink: " + workspacePath);
+          logger.info("[DirectoryStructure] Skipping external symlink: " + workspacePath + " -> " + canonicalPath);
           skippedSymlinkCount.incrementAndGet();
           return Futures.immediateFuture(null);
         }
-        // Skip symlinks we've already visited via another path (prevents pnpm symlink cycles).
+        // Already visited via another path — register as a leaf so navigation works,
+        // but don't recurse (prevents infinite cycles from pnpm workspace symlinks).
         if (!visitedCanonicalPaths.add(canonicalPath)) {
+          logger.info("[DirectoryStructure] Already visited (cycle): " + workspacePath + " -> " + canonicalPath);
           skippedSymlinkCount.incrementAndGet();
-          return Futures.immediateFuture(null);
+          return Futures.immediateFuture(new PathStructurePair(workspacePath, EMPTY));
         }
+        logger.info("[DirectoryStructure] Following internal symlink: " + workspacePath + " -> " + canonicalPath);
       } catch (IOException e) {
+        logger.info("[DirectoryStructure] IOException resolving symlink: " + workspacePath + " " + e.getMessage());
         return Futures.immediateFuture(null);
       }
     }

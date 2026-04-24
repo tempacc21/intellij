@@ -15,17 +15,8 @@
   -->
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <!-- Need to come before com.intellij.lang.javascript.navigation.JSGotoDeclarationHandler -->
-    <gotoDeclarationHandler
-        implementation="com.google.idea.blaze.typescript.BlazeTypescriptGotoDeclarationHandler"
-        id="Blaze.Typescript"
-        order="first"/>
     <additionalLibraryRootsProvider
         implementation="com.google.idea.blaze.typescript.BlazeTypeScriptAdditionalLibraryRootsProvider"/>
-    <projectService
-        serviceInterface="com.intellij.lang.typescript.tsconfig.TypeScriptConfigService"
-        serviceImplementation="com.google.idea.blaze.typescript.DelegatingTypeScriptConfigService"
-        overrides="true"/>
     <runLineMarkerContributor
         implementationClass="com.google.idea.blaze.javascript.run.producers.BlazeJavaScriptTestRunLineMarkerContributor"
         language="JavaScript"/>
@@ -42,11 +33,5 @@
     <BlazeTestEventsHandler
         implementation="com.google.idea.blaze.javascript.run.smrunner.BlazeJavascriptTestEventsHandler"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.typescript.TypeScriptPrefetchFileSource"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="JavaScript">
-    <elementScopeProvider
-        implementation="com.google.idea.blaze.javascript.BlazeJavascriptResolveScopeProvider"
-        order="first"/>
   </extensions>
 </idea-plugin>
