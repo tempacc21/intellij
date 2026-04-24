@@ -30,13 +30,18 @@ import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Directory structure representation used by {@link ContentEntryEditor}.
@@ -45,6 +50,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * structure commit step, as this step locks the UI.
  */
 public class DirectoryStructure {
+
+  private static final Logger logger = Logger.getInstance(DirectoryStructure.class);
 
   final ImmutableMap<WorkspacePath, DirectoryStructure> directories;
 
@@ -82,6 +89,20 @@ public class DirectoryStructure {
             .build();
     Collection<WorkspacePath> rootDirectories = importRoots.rootDirectories();
     Set<WorkspacePath> excludeDirectories = importRoots.excludeDirectories();
+    logger.info("[DirectoryStructure] Starting walk. rootDirectories=" + rootDirectories.size()
+        + " excludeDirectories=" + excludeDirectories.size()
+        + " roots=" + rootDirectories);
+    long startMs = System.currentTimeMillis();
+    AtomicInteger walkedCount = new AtomicInteger(0);
+    AtomicInteger skippedSymlinkCount = new AtomicInteger(0);
+    // Track canonical paths already visited to prevent cycles from pnpm workspace symlinks.
+    Set<String> visitedCanonicalPaths = ConcurrentHashMap.newKeySet();
+    String workspaceCanonicalPath;
+    try {
+      workspaceCanonicalPath = workspaceRoot.directory().getCanonicalPath();
+    } catch (IOException e) {
+      workspaceCanonicalPath = workspaceRoot.directory().getAbsolutePath();
+    }
     List<ListenableFuture<PathStructurePair>> futures =
         Lists.newArrayListWithExpectedSize(rootDirectories.size());
     for (WorkspacePath rootDirectory : rootDirectories) {
@@ -92,7 +113,11 @@ public class DirectoryStructure {
               fileOperationProvider,
               FetchExecutor.EXECUTOR,
               rootDirectory,
-              cancelled));
+              cancelled,
+              walkedCount,
+              skippedSymlinkCount,
+              visitedCanonicalPaths,
+              workspaceCanonicalPath));
     }
     ImmutableMap.Builder<WorkspacePath, DirectoryStructure> result = ImmutableMap.builder();
     for (PathStructurePair pair : Futures.allAsList(futures).get()) {
@@ -100,6 +125,10 @@ public class DirectoryStructure {
         result.put(pair.path, pair.directoryStructure);
       }
     }
+    long elapsedMs = System.currentTimeMillis() - startMs;
+    logger.info("[DirectoryStructure] Walk complete in " + elapsedMs + "ms."
+        + " directoriesWalked=" + walkedCount.get()
+        + " symlinkSkipped=" + skippedSymlinkCount.get());
     return new DirectoryStructure(result.build());
   }
 
@@ -109,7 +138,11 @@ public class DirectoryStructure {
       FileOperationProvider fileOperationProvider,
       ListeningExecutorService executorService,
       WorkspacePath workspacePath,
-      AtomicBoolean cancelled) {
+      AtomicBoolean cancelled,
+      AtomicInteger walkedCount,
+      AtomicInteger skippedSymlinkCount,
+      Set<String> visitedCanonicalPaths,
+      String workspaceCanonicalPath) {
     if (cancelled.get() || excludeDirectories.contains(workspacePath)) {
       return Futures.immediateFuture(null);
     }
@@ -117,6 +150,25 @@ public class DirectoryStructure {
     if (!fileOperationProvider.isDirectory(file)) {
       return Futures.immediateFuture(null);
     }
+    if (Files.isSymbolicLink(file.toPath())) {
+      try {
+        String canonicalPath = file.getCanonicalPath();
+        // Skip symlinks pointing outside the workspace (e.g. bazel-bin, bazel-out, bazel-<repo>).
+        if (!canonicalPath.startsWith(workspaceCanonicalPath)) {
+          logger.info("[DirectoryStructure] Skipping external symlink: " + workspacePath);
+          skippedSymlinkCount.incrementAndGet();
+          return Futures.immediateFuture(null);
+        }
+        // Skip symlinks we've already visited via another path (prevents pnpm symlink cycles).
+        if (!visitedCanonicalPaths.add(canonicalPath)) {
+          skippedSymlinkCount.incrementAndGet();
+          return Futures.immediateFuture(null);
+        }
+      } catch (IOException e) {
+        return Futures.immediateFuture(null);
+      }
+    }
+    walkedCount.incrementAndGet();
     ListenableFuture<File[]> childrenFuture =
         executorService.submit(() -> fileOperationProvider.listFiles(file));
     return Futures.transformAsync(
@@ -142,7 +194,11 @@ public class DirectoryStructure {
                     fileOperationProvider,
                     executorService,
                     childWorkspacePath,
-                    cancelled));
+                    cancelled,
+                    walkedCount,
+                    skippedSymlinkCount,
+                    visitedCanonicalPaths,
+                    workspaceCanonicalPath));
           }
           return Futures.transform(
               Futures.allAsList(futures),
