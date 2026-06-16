@@ -14,6 +14,7 @@ load(
 )
 load(
     ":build_defs.bzl",
+    "define_ij_product_settings",
     "select_build_name",
     "select_from_plugin_api_directory",
 )
@@ -24,112 +25,11 @@ licenses(["notice"])
 
 create_test_libs_visibility_package()
 
-config_setting(
-    name = "intellij-oss-oldest-stable",
-    values = {
-        "define": "ij_product=intellij-oss-oldest-stable",
-    },
-)
+define_ij_product_settings()
 
 config_setting(
-    name = "intellij-ue-oss-oldest-stable",
-    values = {
-        "define": "ij_product=intellij-ue-oss-oldest-stable",
-    },
-)
-
-config_setting(
-    name = "intellij-oss-latest-stable",
-    values = {
-        "define": "ij_product=intellij-oss-latest-stable",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-oss-latest-stable",
-    values = {
-        "define": "ij_product=intellij-ue-oss-latest-stable",
-    },
-)
-
-config_setting(
-    name = "intellij-oss-under-dev",
-    values = {
-        "define": "ij_product=intellij-oss-under-dev",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-oss-under-dev",
-    values = {
-        "define": "ij_product=intellij-ue-oss-under-dev",
-    },
-)
-
-config_setting(
-    name = "intellij-under-dev",
-    values = {
-        "define": "ij_product=intellij-under-dev",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-under-dev",
-    values = {
-        "define": "ij_product=intellij-ue-under-dev",
-    },
-)
-
-config_setting(
-    name = "intellij-2025.3",
-    values = {"define": "ij_product=intellij-2025.3"},
-)
-
-config_setting(
-    name = "intellij-2026.1",
-    values = {"define": "ij_product=intellij-2026.1"},
-)
-
-config_setting(
-    name = "intellij-2025.3-mac",
-    values = {
-        "define": "ij_product=intellij-2025.3",
-        "cpu": "darwin_x86_64",
-    },
-)
-
-config_setting(
-    name = "intellij-2026.1-mac",
-    values = {
-        "define": "ij_product=intellij-2026.1",
-        "cpu": "darwin_x86_64",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-2025.3",
-    values = {"define": "ij_product=intellij-ue-2025.3"},
-)
-
-config_setting(
-    name = "intellij-ue-2026.1",
-    values = {"define": "ij_product=intellij-ue-2026.1"},
-)
-
-config_setting(
-    name = "intellij-ue-2025.3-mac",
-    values = {
-        "define": "ij_product=intellij-ue-2025.3",
-        "cpu": "darwin_x86_64",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-2026.1-mac",
-    values = {
-        "define": "ij_product=intellij-ue-2026.1",
-        "cpu": "darwin_x86_64",
-    },
+    name = "jbr_runtime",
+    values = {"java_runtime_version": "jbr"},
 )
 
 # The purpose of this rule is to hide the versioning

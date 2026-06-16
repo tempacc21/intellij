@@ -26,14 +26,17 @@ import java.security.MessageDigest
 import javax.xml.parsers.DocumentBuilderFactory
 
 // Usage: bazel run //tools/maintenance -- $PWD/MODULE.bazel && cp MODULE.bazel.out MODULE.bazel
-fun main(args: Array<String>) { 
-    val out = Paths.get("${args[0]}.out")
-    Files.copy(Paths.get(args[0]), out, StandardCopyOption.REPLACE_EXISTING)
-    bumpPlugins("261", out)
-    bumpPlugins("253", out)
-    bumpRelease("2025.3", "253", out)
-    bumpRelease("2026.1", "261", out)
-    // bumpMavenPackages("junit:junit", "JUNIT", out)
+fun main(args: Array<String>) {
+  var content = Files.readString(Path.of(args[0]))
+
+  content = bumpSdk("2025.3", eap = false, content)
+  content = bumpPythonPlugin("253", content)
+  content = bumpSdk("2026.1", eap = false, content)
+  content = bumpPythonPlugin("261", content)
+  content = bumpSdk("262", eap = true, content)
+  content = bumpPythonPlugin("262", content)
+
+  Files.writeString(Paths.get("${args[0]}.out"), content,  StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
 }
 
 fun bumpMavenPackages(coordinates: String, variablePrefix: String, out: Path) {

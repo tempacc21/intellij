@@ -11,8 +11,10 @@ java_library(
     exports = select_for_plugin_api({
         "intellij-2025.3": ["@python_2025_3//:python"],
         "intellij-2026.1": ["@python_2026_1//:python"],
+        "intellij-2026.2": ["@python_2026_2//:python"],
         "intellij-ue-2025.3": ["@python_2025_3//:python"],
         "intellij-ue-2026.1": ["@python_2026_1//:python"],
+        "intellij-ue-2026.2": ["@python_2026_2//:python"],
     }),
 )
 
@@ -21,8 +23,10 @@ filegroup(
     srcs = select_for_plugin_api({
         "intellij-2025.3": ["@python_2025_3//:python_helpers"],
         "intellij-2026.1": ["@python_2026_1//:python_helpers"],
+        "intellij-2026.2": ["@python_2026_2//:python_helpers"],
         "intellij-ue-2025.3": ["@python_2025_3//:python_helpers"],
         "intellij-ue-2026.1": ["@python_2026_1//:python_helpers"],
+        "intellij-ue-2026.2": ["@python_2026_2//:python_helpers"],
     }),
     visibility = ["//visibility:private"],
 )

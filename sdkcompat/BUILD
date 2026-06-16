@@ -18,8 +18,10 @@ java_library(
     exports = select_for_plugin_api({
         "intellij-2025.3": ["//sdkcompat/v253"],
         "intellij-2026.1": ["//sdkcompat/v261"],
+        "intellij-2026.2": ["//sdkcompat/v262"],
         "intellij-ue-2025.3": ["//sdkcompat/v253"],
         "intellij-ue-2026.1": ["//sdkcompat/v261"],
+        "intellij-ue-2026.2": ["//sdkcompat/v262"],
         "default": [],
     }),
 )

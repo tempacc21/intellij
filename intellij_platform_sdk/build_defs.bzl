@@ -1,15 +1,16 @@
 """Convenience methods for plugin_api."""
 
+load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@rules_java//java:defs.bzl", "java_import")
 
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
     "intellij-oss-oldest-stable": "intellij-2025.3",
     "intellij-oss-latest-stable": "intellij-2026.1",
-    "intellij-oss-under-dev": "intellij-2026.1",
+    "intellij-oss-under-dev": "intellij-2026.2",
     "intellij-ue-oss-oldest-stable": "intellij-ue-2025.3",
     "intellij-ue-oss-latest-stable": "intellij-ue-2026.1",
-    "intellij-ue-oss-under-dev": "intellij-ue-2026.1",
+    "intellij-ue-oss-under-dev": "intellij-ue-2026.2",
 }
 
 (CHANNEL_STABLE, CHANNEL_BETA, CHANNEL_CANARY, CHANNEL_FREEFORM) = ("stable", "beta", "canary", "freeform")
@@ -53,7 +54,28 @@ def _build_ij_product_dict(versions):
 
     return result
 
-DIRECT_IJ_PRODUCTS = _build_ij_product_dict(["2025.3", "2026.1"])
+DIRECT_IJ_PRODUCTS = _build_ij_product_dict(["2025.3", "2026.1", "2026.2"])
+
+def define_ij_product_settings():
+    """Defines a config_setting per ij_product (direct and indirect) and a
+    config_setting_group `<direct>-or-alias` matching either the direct name
+    or its INDIRECT_IJ_PRODUCTS alias. Intended for //intellij_platform_sdk:BUILD."""
+
+    for ij_product in DIRECT_IJ_PRODUCTS.keys():
+        native.config_setting(
+            name = ij_product,
+            values = {"define": "ij_product=" + ij_product},
+        )
+
+    for indirect, direct in INDIRECT_IJ_PRODUCTS.items():
+        native.config_setting(
+            name = indirect,
+            values = {"define": "ij_product=" + indirect},
+        )
+        selects.config_setting_group(
+            name = direct + "-or-alias",
+            match_any = [":" + direct, ":" + indirect],
+        )
 
 def select_for_plugin_api(params):
     """Selects for a plugin_api.

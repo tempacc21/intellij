@@ -6,7 +6,9 @@ kt_kotlinc_options(
     include_stdlibs = "none",
     jvm_target = select_for_plugin_api({
         "intellij-2026.1": "21",
+        "intellij-2026.2": "21",
         "intellij-ue-2026.1": "21",
+        "intellij-ue-2026.2": "21",
         "default": "17",
     }),
 )
@@ -18,15 +20,19 @@ define_kt_toolchain(
     api_version = select_for_plugin_api({
         "intellij-2025.3": "2.3",
         "intellij-2026.1": "2.4",
+        "intellij-2026.2": "2.4",
         "intellij-ue-2025.3": "2.3",
         "intellij-ue-2026.1": "2.4",
+        "intellij-ue-2026.2": "2.4",
     }),
     jvm_target = "17",
     kotlinc_options = ":kotlinc_options",
     language_version = select_for_plugin_api({
         "intellij-2025.3": "2.3",
         "intellij-2026.1": "2.4",
+        "intellij-2026.2": "2.4",
         "intellij-ue-2025.3": "2.3",
         "intellij-ue-2026.1": "2.4",
+        "intellij-ue-2026.2": "2.4",
     }),
 )
