@@ -17,9 +17,6 @@ package com.google.idea.blaze.kotlin.sync;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.ExternalLibraryDescriptor;
-import com.intellij.psi.PsiElement;
 import java.util.Collection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +25,6 @@ import org.jetbrains.kotlin.config.LanguageFeature;
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup;
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus;
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator;
-import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor;
 import org.jetbrains.kotlin.platform.TargetPlatform;
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms;
 
@@ -52,14 +48,6 @@ public class BlazeKotlinProjectConfigurator implements KotlinProjectConfigurator
   public TargetPlatform getTargetPlatform() {
     return JvmPlatforms.INSTANCE.getUnspecifiedJvmPlatform();
   }
-
-  @Override
-  public void addLibraryDependency(
-      @NotNull Module module,
-      @NotNull PsiElement psiElement,
-      @NotNull ExternalLibraryDescriptor externalLibraryDescriptor,
-      @NotNull LibraryJarDescriptor libraryJarDescriptor,
-      @NotNull DependencyScope dependencyScope) {}
 
   @Override
   public void changeGeneralFeatureConfiguration(

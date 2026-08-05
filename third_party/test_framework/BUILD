@@ -12,6 +12,13 @@ java_library(
             "@java_test_framework_261//jar",
             "@java_test_framework_shared_261//jar",
         ],
+        "intellij-2026.2": [
+            "@test_framework_262//jar",
+            "@test_framework_common_262//jar",
+            "@test_framework_core_262//jar",
+            "@java_test_framework_262//jar",
+            "@java_test_framework_shared_262//jar",
+        ],
         "intellij-ue-2026.1": [
             "@test_framework_261//jar",
             "@test_framework_common_261//jar",
@@ -19,6 +26,14 @@ java_library(
             "@java_test_framework_261//jar",
             "@java_test_framework_shared_261//jar",
         ],
+        "intellij-ue-2026.2": [
+            "@test_framework_262//jar",
+            "@test_framework_common_262//jar",
+            "@test_framework_core_262//jar",
+            "@java_test_framework_262//jar",
+            "@java_test_framework_shared_262//jar",
+        ],
+
         "default": [],
     }),
 )
@@ -30,8 +45,14 @@ java_library(
         "intellij-2026.1": [
             "@util_261//jar",
         ],
+        "intellij-2026.2": [
+            "@util_262//jar",
+        ],
         "intellij-ue-2026.1": [
             "@util_261//jar",
+        ],
+        "intellij-ue-2026.2": [
+            "@util_262//jar",
         ],
         "default": [],
     }),

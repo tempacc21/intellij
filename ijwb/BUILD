@@ -50,7 +50,7 @@ stamped_plugin_xml(
     name = "stamped_plugin_xml",
     changelog_file = "//:changelog",
     description_file = "src/META-INF/description.html",
-    plugin_id = "com.google.idea.bazel.ijwb",
+    plugin_id = "no.fremtind.idea.bazel.ijwb",
     plugin_name = "Bazel for IntelliJ (Fremtind)",
     # #api212: We depend on an API which is only contained in 2021.2.1+.
     since_build_numbers = {"212": "212.5080.55"},

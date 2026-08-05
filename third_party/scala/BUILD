@@ -11,8 +11,10 @@ java_library(
     exports = select_for_plugin_api({
         "intellij-2025.3": ["@scala_2025_3//:scala"],
         "intellij-2026.1": ["@scala_2026_1//:scala"],
+        "intellij-2026.2": ["@scala_2026_2//:scala"],
         "intellij-ue-2025.3": ["@scala_2025_3//:scala"],
         "intellij-ue-2026.1": ["@scala_2026_1//:scala"],
+        "intellij-ue-2026.2": ["@scala_2026_2//:scala"],
         "default": [],
     }),
 )

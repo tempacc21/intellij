@@ -1,4 +1,4 @@
-build --java_language_version=21 --java_runtime_version=jbr
+build --java_language_version=21 --java_runtime_version=remotejdk_25
 build --tool_java_language_version=25 --tool_java_runtime_version=remotejdk_25
 
 # Delete test data packages, needed for bazel integration tests. Update by running the following command:

@@ -14,30 +14,36 @@
 
 # Description: Indirections for SDK changes to the underlying platform library.
 
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_java//java:java_library.bzl", "java_library")
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
 
 licenses(["notice"])
 
-kt_jvm_library(
-    name = "v262",
-    srcs = glob([
-        "com/google/idea/sdkcompat/clion/**",
-        "com/google/idea/sdkcompat/javascript/**",
-    ]),
-    visibility = ["//sdkcompat:__pkg__"],
+java_library(
     deps = [
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
         "//intellij_platform_sdk:plugin_api",
         "//third_party/javascript",
+        "//third_party/python",
+        "//third_party/scala",
     ],
-)
-
-kt_jvm_library(
-    name = "v262_radler",
-    srcs = glob(["com/google/idea/sdkcompat/radler/**"]),  #api253
+    name = "v262",
+    srcs = select_for_ide(
+        default = glob([
+            "com/google/idea/sdkcompat/base/**",
+            "com/google/idea/sdkcompat/ide/**",
+            "com/google/idea/sdkcompat/python/**",
+            "com/google/idea/sdkcompat/scala/**",
+            "com/google/idea/sdkcompat/testFramework/**",
+        ]),
+        intellij_ue = glob([
+            "com/google/idea/sdkcompat/base/**",
+            "com/google/idea/sdkcompat/ide/**",
+            "com/google/idea/sdkcompat/javascript/**",
+            "com/google/idea/sdkcompat/python/**",
+            "com/google/idea/sdkcompat/scala/**",
+            "com/google/idea/sdkcompat/testFramework/**",
+        ]),
+    ),
     visibility = ["//sdkcompat:__pkg__"],
-    deps = [
-        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
-        "//intellij_platform_sdk:plugin_api",
-    ],
 )
